@@ -1,0 +1,76 @@
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>   
+    <script src="https://bootstrap-tagsinput.github.io/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://bootstrap-tagsinput.github.io/bootstrap-tagsinput/dist/bootstrap-tagsinput.css">-->
+    <style>
+        .back{            
+            position: absolute;
+            left: 10px;
+            top: 10px;
+        }
+    </style>
+
+  </head>
+  
+
+
+<div class="jumbotron text-center">
+    <div class="back">
+        <a href="/admin"><button style="font-size:24px"><i class="fa fa-arrow-circle-left"></i> Go Back</button></a>
+    </div>
+    <h1 class="font-weight-bolder">Add New Books</h1>
+
+</div>
+
+<%if(locals.add&&add==1){ %>
+    <div class="px-5 alert alert-success alert-dismissible">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Success!</strong> The new Book has been added to the database successfully !
+      </div>
+<% } %>
+
+<form class="form font-weight-bolder p-4" method="post" action="/admin/addBookAction">
+    <div class="row p-2">
+        <div class="col">
+          <label for ="bookName">Book Name :</label>
+          <input type="text" class="form-control" name="bookName" required>
+        </div>
+        <div class="col">
+          <label for ="isbn">Book ISBN :</label>
+          <input type="text" class="form-control" name="isbn" required>
+        </div>
+    </div>
+    <div class="row p-2">
+        <div class="col">
+            <label for ="description">Description :</label>
+            <input type="text" class="form-control" name="description" required>
+        </div>
+    </div>
+    <p class="font-weight-normal mt-4 lead text-monospace">Press Enter To Input Multiple Elements :</p>
+    <div class="row px-2 pb-2">
+        <div class="col">
+            <label for ="tags">Tags :</label>
+            <input type="text" class="form-control" data-role="tagsinput" name="tags" required/>
+        </div>
+    </div>    
+    <div class="row p-2">
+        <div class="col">
+            <label for ="author">Authors : </label>
+            <input type="text" class="form-control" data-role="tagsinput" name="author" required/>
+        </div>        
+    </div>
+    <div class="row p-2">
+        <div class="col">
+            <label for ="copies">Book Copy ID : </label>
+            <input type="text" class="form-control" data-role="tagsinput" name="copies" required/>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary text m-2" value="addbook">Add Book</button>
+</form>

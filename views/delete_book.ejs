@@ -1,0 +1,194 @@
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+       <style>
+        /*--------------------------SEARCHBAR STYLING------------------------*/
+        @import url(http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css);
+
+        body{
+        background: #f2f2f2;
+        }
+
+        .search {
+        width: 100%;
+        position: relative
+        }
+
+        .searchTerm {
+        float: left;
+        width: 100%;
+        border: 3px solid #00B4CC;
+        padding: 5px;
+        height: 50px;
+        border-radius: 5px;
+        color: #9DBFAF;
+        }
+
+        .searchTerm:focus{
+        color: #00B4CC;
+        }
+
+        .searchButton {
+        position: absolute;
+        right: -50px;
+        width: 40px;
+        height: 50px;
+        opacity: 0;
+        cursor: pointer;
+        }
+
+        .search:before {
+        position: absolute;
+        right: -60px;
+        width: 50px;
+        height: 50px;
+        line-height: 36px;
+        background: #00B4CC;
+        text-align: center;
+        color: #fff;
+        border-radius: 5px;
+        font-family: 'FontAwesome';
+        content: '\f002';
+        }
+
+        /*Resize the wrap to see the search bar change!*/
+        .wrap{
+        width: 60%;
+        margin: 5% auto;
+        }        
+        
+
+        /*------------------CHECKBOX-------------------*/
+
+        input[type=checkbox] + label {
+            display: inline-block;
+            margin: 0.3em;
+            cursor: pointer;
+            padding: 0.5em;
+            color: #28f;
+        }
+        input[id=BookName]+label{
+            margin-left : 30%;
+        }
+        input[type=checkbox] {
+            display: none;
+        }
+
+        input[type=checkbox] + label:before {
+            content: "\2714";
+            border: 0.1em solid #000;
+            border-radius: 0.2em;
+            display: inline-block;
+            width: 2em;
+            height: 2em;
+            padding-left: 0.2em;
+            padding-bottom: 0.3em;
+            margin-right: 0.2em;
+            vertical-align: bottom;
+            color: transparent;
+            transition: .2s;
+        }
+
+        input[type=checkbox] + label:active:before {
+            transform: scale(0);
+        }
+
+        input[type=checkbox]:checked + label:before {
+            background-color: MediumSeaGreen;
+            border-color: MediumSeaGreen;
+            color: #fff;
+        }
+
+
+
+        /*--------------------BOOKLIST STYLING------------------------*/
+
+        .booklist{
+            line-height: 35px;
+            margin: 30px 10%;       
+        }
+        .jumbotron{
+            background-color:rgb(191, 196, 196);  
+        }
+        .list{
+            border-radius: 20px;
+            background-color: antiquewhite;
+            margin: 5px;
+            font-size: 20px;
+
+        }
+        .lists{
+            padding: 20px;
+            border-radius: 20px;
+        }
+        .list:hover{
+            background-color: wheat;
+            transition: 0.5s;
+            text-decoration: none;
+            transition-duration: 0.5s;
+        }
+        .back{            
+            position: absolute;
+            left: 10px;
+            top: 10px;
+        }
+    </style>
+</head>
+
+
+<div class="jumbotron text-center">
+    <div class="back">
+        <a href="/admin"><button style="font-size:24px"><i class="fa fa-arrow-circle-left"></i> Go Back</button></a>
+    </div>
+    <h1 class="font-weight-bolder">Delete Books</h1>
+</div>
+
+<%if(locals.del&&del==1){ %>
+    <div class="px-5 alert alert-success alert-dismissible">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+        <strong>Success!</strong> The Book has been successfully deleted from the database !
+      </div>
+<% } %>
+
+<form method = "post" class="form-group" action="/admin/deleteBookSearchAction">
+    <div class="wrap" class="form-group">
+        <div class="search">
+           <input type="text" class="searchTerm" placeholder="What are you looking for?"  name="Search">
+           <input type="submit" class="searchButton">
+        </div>
+     </div>
+     <br><br>
+     <h3 style="margin-left: 31%;">Search in :</h3>
+    <input type="checkbox" class="form-control"id="BookName" value="BookName" name="BookName">
+    <label for="BookName"> Book Name</label>
+    <input type="checkbox" id="Author" value="Author" name="Author">
+    <label for="Author"> Author</label>
+    <input type="checkbox" id="Tag" value="Tag" name="Tag">
+    <label for="Tag"> Tag</label>
+    <input type="checkbox" id="Description" value="Description" name="Description">
+    <label for="Description"> Description</label>
+  </form>
+
+<br><hr>
+<ul class = "booklist">
+    <% if(locals.books){ %>
+    <% books.forEach(function(book){ %>
+        <div class="lists jumbotron list-group font-weight-bolder"><br>
+            <form action="/deleteBookAction" onsubmit="confirm('Are you sure you want to delete the book?')" method="POST" id="form"> 
+                <input type="hidden" name="id" value=<%= book._id%> >
+                <div class=" position-absolute float-right text-right">
+                <button type="submit" class="btn btn-danger btn-lg"><i class="fa fa-close"></i></button>
+                </div>
+            </form>
+            <li class = "list list-group-item ">The book    : <%= book.name %> </li>
+            <li class = "list list-group-item">Description : <%= book.description %> </v>
+            <li class = "list list-group-item">ISBN        : <%= book.book_ISBN %> </li>
+            <li class = "list list-group-item">_id         : <%= book._id %> </li>
+            <li class = "list list-group-item">Authors     : <%= book.author %> </li><br>
+            <a class="list"href="/borrow/<%= book._id %>" ><button class="btn btn-success btn-lg btn-block">Rent</button></a>
+            
+        </div>
+    <% })} %> 
+</ul>

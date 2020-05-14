@@ -1,0 +1,34 @@
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script> 
+</head>
+
+
+<h1 class="text-center font-weight-bolder jumbotron">Login Page</h1>
+
+<%if(locals.err&&err==1){ %>
+  <div class="px-5 alert alert-danger alert-dismissible">
+      <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+      <strong>Error!</strong> Username or Password is incorrect
+    </div>
+<% } %>
+
+<form method="post" class="form p-5" action="/userLoginAction">
+  <div class="row">
+    <label for="username">Username:</label>
+    <input type="text" class="form-control" name="username">
+  </div>
+  <div class="row">
+    <label for="password">Password:</label>
+    <input type="password" class="form-control" name="password">
+  </div>
+  <div class="row pt-3">
+    <button type="submit" class="btn btn-success" value="Login">Login</button>
+  </div>
+</form>
+<div class="p-3">
+  <p>New User? </p>
+  <a href = "/register"><button class="btn btn-primary">Register</button></a>
+</div>

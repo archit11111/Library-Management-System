@@ -1,0 +1,24 @@
+
+
+<h1 style = "text-align: center;">Borrow Page</h1>
+
+<p>Your Book : <%= book.name %></p>
+<p>Book Description : <%= book.description %></p>
+<p>Book ISBN number : <%= book.book_ISBN %></p>
+<br>
+<p>Are you sure you want to borrow this book?</p>
+<a href='/borrow/<%= book.id %>/confirm'><button>Confirm</button></a>
+<a href='/index'><button>Go back</button></a>
+<br><br>
+
+
+
+<h1>Comments : </h1>
+<br>
+<%comment.forEach( (comment) =>{ %>
+    <%if(comment.comment==undefined)return; %>
+    <p><%= comment.user_id.name.fname+" "+comment.user_id.name.lname %> : <%= comment.comment %> </p>
+<% } ) %>
+
+
+
