@@ -119,7 +119,7 @@ router.use("/borrow/:id",(req,res,next)=>{
             console.log('redirected');
             res.redirect('/login');
         }else{
-            console.log(req.params+"\nworking");
+            //console.log(req.params+"\nworking");
             next();
         }
     }
@@ -235,7 +235,7 @@ router.get("/borrow/:id",(req,res)=>{
 
 
 
-/*router.get("/borrow/:id/confirm",(req,res)=>{
+router.get("/borrow/:id/confirm",(req,res)=>{
     let id = (req.params.id);
     Book.findOne({'_id' : mongoose.Types.ObjectId(id) },(err,book)=>{
         if(err){
@@ -248,15 +248,37 @@ router.get("/borrow/:id",(req,res)=>{
             res.end("Something went wrong!");
         else{
             const username=req.session.name;
-            User.findOne({userName:username},(req2,user)=>{
-                const new_borrow_request=new BorrowRequest({
-
-                });
+            User.findOne({userName:username},(err,user)=>{
+                if(user.borrow_status.length>=2)
+                    res.send("borrow limit exceeded");
+                else if(book.copies.length===0){
+                    res.send('Sorry, currently no books are available!');
+                }
+                else{
+                    const new_borrow_request=new BorrowRequest({
+                        user_id : user._id,
+                        book_id : book._id,
+                        copy_id : book.copies[book.copies.length-1]
+                    });
+                    new_borrow_request.save((err,borrow_obj)=>{
+                        if(err)
+                            res.send(err);
+                        else {
+                            User.findOneAndUpdate({_id:user._id},{$push:{borrow_status:borrow_obj._id}},err=>{if(err)console.log(err)});
+                            console.log(user);
+                            Book.updateOne({_id:book._id},{$pull:{copies:book.copies[book.copies.length-1]}},err=>{if(err)console.log(err);});
+                            res.send('saved!');
+                        }
+                    });
+                }
             });
             
         }
     });    
-    res.send("Your book has been confirmed");
-});*/
+    //res.send("Your book has been confirmed");
+});
+
+
+
 
 module.exports = router;

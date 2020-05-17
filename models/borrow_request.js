@@ -15,21 +15,21 @@ const borrowSchema = new mongoose.Schema({
         required : true
     },
     copy_id : {
-        type : mongoose.Schema.Types.ObjectId,
-        ref : "Book",
+        type : String,//mongoose.Schema.Types.ObjectId,
+        //ref : "Book",
         required : true
     },
     //borrow date automatically set to time of initiation of borrow request
-    borrow_date : {
+    /*borrow_date : {
         type : Date,
         default : Date.now,
- //       expires : 3600
-    },
+        //expires : 60
+    },*/
     due_date : {
         type : Date,
-        default : Date.now + 7*24*60*60*1000 // 7 days from borrow
-    }
-});
-//borrowSchema.index({"createdAt" : 1},{expireAfterSeconds : 3600});
+        default : new Date(+new Date()+7*24*60*60*1000)//Date.now + 7*24*60*60*1000 // 7 days from borrow
+    },
+},{timestamps:true});
+//borrowSchema.index({"createdAt" : 1},{expireAfterSeconds : 60});
 
 module.exports = mongoose.model("BorrowRequest",borrowSchema);

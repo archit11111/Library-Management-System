@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
  
     borrow_status   : [{
         type : mongoose.Schema.Types.ObjectId,
-        ref  : "BorrowLog" 
+        ref  : "BorrowRequest" 
     }]
 });
 

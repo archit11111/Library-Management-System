@@ -6,6 +6,7 @@ const express       = require('express'),
       User          = require('./models/user')
       routes        = require('./routes/routes'),
       BorrowLog     = require("./models/borrow_log"),
+      controller    = require('./controllers/controller'),
       BorrowRequest = require("./models/borrow_request");
 
 
@@ -22,7 +23,7 @@ app.use(bodyParser.urlencoded({extended : false}));
 //app.use('/index',(req,res,next)=>{console.log(Date(Date.now()).toString());next();})
 app.set('view engine', 'ejs');
 app.use(routes);
-
+app.use(controller.borrow_check);
 app.listen(1234,()=>{
     console.log("Server running...");
 });
