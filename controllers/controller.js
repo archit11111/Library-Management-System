@@ -13,7 +13,7 @@ function borrow_check(){
         for(let i=0;i<reqs.length;i++){
             let d=new Date(reqs[i].createdAt);
             //console.log((current_time-d)/60000);
-            if(((current_time-d)/60000)>0.50){
+            if(((current_time-d)/60000)>150){
                 BorrowRequest.deleteOne({_id : reqs[i]._id},(err,br)=>{
                     if(err)
                         console.log(err.message);

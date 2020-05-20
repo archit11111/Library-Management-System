@@ -1,0 +1,181 @@
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script> 
+    <style>
+        @import url(http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css);
+
+        body{
+        background: #f2f2f2;
+        }
+        
+        *{text-decoration: none !important}
+
+        .search {
+        width: 100%;
+        position: relative
+        }
+
+        .searchTerm {
+        float: left;
+        width: 100%;
+        border: 3px solid #00B4CC;
+        padding: 5px;
+        height: 50px;
+        border-radius: 5px;
+        color: #9DBFAF;
+        }
+
+        .searchTerm:focus{
+        color: #00B4CC;
+        }
+
+        .searchButton {
+        position: absolute;
+        right: -50px;
+        width: 40px;
+        height: 50px;
+        opacity: 0;
+        cursor: pointer;
+        }
+
+        .search:before {
+        position: absolute;
+        right: -60px;
+        width: 50px;
+        height: 50px;
+        line-height: 36px;
+        background: #00B4CC;
+        text-align: center;
+        color: #fff;
+        border-radius: 5px;
+        font-family: 'FontAwesome';
+        content: '\f002';
+        }
+
+        /*Resize the wrap to see the search bar change!*/
+        .wrap{
+        width: 60%;
+        margin: 5% auto;
+        }        
+
+
+        /*------------------CHECKBOX-------------------*/
+
+        input[type=checkbox] + label {
+            display: inline-block;
+            margin: 0.3em;
+            cursor: pointer;
+            padding: 0.5em;
+            color: #28f;
+        }
+        input[id=requestor]+label{
+            margin-left : 25%;
+        }
+        input[type=checkbox] {
+            display: none;
+        }
+
+        input[type=checkbox] + label:before {
+            content: "\2714";
+            border: 0.1em solid #000;
+            border-radius: 0.2em;
+            display: inline-block;
+            width: 2em;
+            height: 2em;
+            padding-left: 0.2em;
+            padding-bottom: 0.3em;
+            margin-right: 0.2em;
+            vertical-align: bottom;
+            color: transparent;
+            transition: .2s;
+        }
+
+        input[type=checkbox] + label:active:before {
+            transform: scale(0);
+        }
+
+        input[type=checkbox]:checked + label:before {
+            background-color: MediumSeaGreen;
+            border-color: MediumSeaGreen;
+            color: #fff;
+        }
+        
+    </style>
+</head>
+
+<div class="jumbotron">
+    <h1 class="text-center font-weight-bolder">Request Logs</h1>
+        <a href="/admin" class="float-right mb-3 p-2"><button class="btn btn-dark">Admin Page</button></a>
+</div>
+
+<form method = "post" class="form-group" action="/admin/requestlog">
+    <div class="wrap" class="form-group">
+        <div class="search">
+           <input type="text" class="searchTerm" placeholder="What are you looking for?"  name="Search">
+           <input type="submit" class="searchButton">
+        </div>
+     </div>
+     <br><br><br>
+    <input type="checkbox" class="form-control pt-5"id="requestor" value="requestor" name="requestor">
+    <label for="requestor"> Requestor's Name</label>
+    <input type="checkbox" id="BookName" value="BookName" name="BookName">
+    <label for="BookName"> Book Name</label>
+    <input type="checkbox" id="copy_id" value="copy_id" name="copy_id">
+    <label for="copy_id"> Copy ID</label>
+    <input type="checkbox" id="borrow_time" value="borrow_time" name="borrow_time">
+    <label for="borrow_time"> Borrow Time</label>
+</form>
+
+<hr>
+<div class="container mt-4">
+    <% for(let i=0;i < request.length ;i=i+3) { %>
+        <div class="card-group">
+            <% if(i < request.length ){ %>
+            <div class="col-sm-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title"><b>Requestor's Name</b> :<br><%= request[i].user_id.name.fname %> <%= request[i].user_id.name.lname %></h4>
+                        <p class="card-text"><b>Requested book</b> :<br> <%= request[i].book_id.name %></p>
+                        <p class="card-text"><b>Copy ID</b> :<br> <%= request[i].copy_id %></p>
+                        <p class="card-text"><b>Borrow time</b> :<br> <%= request[i].createdAt %></p>
+                        <a href='/admin/requestlog/accept/<%=request[i]._id%>'><button class="my-2 btn btn-success btn-lg btn-block ">Accept &nbsp;<i class="fa fa-check" aria-hidden="true"></i></button></a>
+                        <a href='/admin/requestlog/reject/<%= request[i]._id %>'><button class="my-2 btn btn-danger btn-lg btn-block ">Reject &nbsp;<i class="fa fa-window-close" aria-hidden="true"></i></button></a>
+                    </div>
+                </div>
+            </div>
+
+            <% } %>
+            <% if(i+1 < request.length ){ %>
+            <div class="col-sm-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title"><b>Requestor's Name</b> :<br><%= request[i+1].user_id.name.fname %> <%= request[i+1].user_id.name.lname %></h4>
+                        <p class="card-text"><b>Requested book</b> :<br> <%= request[i+1].book_id.name %></p>
+                        <p class="card-text"><b>Copy ID</b> :<br> <%= request[i+1].copy_id %></p>
+                        <p class="card-text"><b>Borrow time</b> :<br> <%= request[i+1].createdAt %></p>
+                        <a href='/admin/requestlog/accept/<%=request[i+1]._id%>'><button class="my-2 btn btn-success btn-lg btn-block ">Accept &nbsp;<i class="fa fa-check" aria-hidden="true"></i></button></a>
+                        <a href='/admin/requestlog/reject/<%= request[i+1]._id %>'><button class="my-2 btn btn-danger btn-lg btn-block ">Reject &nbsp;<i class="fa fa-window-close" aria-hidden="true"></i></button></a>
+                    </div>
+                </div>
+            </div>  
+            <% } %>
+            <% if(i+2 < request.length ){ %>
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title"><b>Requestor's Name</b> :<br><%= request[i+2].user_id.name.fname  %> <%= request[i+2].user_id.name.lname %></h4>
+                            <p class="card-text"><b>Requested book</b> :<br> <%= request[i+2].book_id.name %></p>
+                            <p class="card-text"><b>Copy ID</b> :<br> <%= request[i+2].copy_id %></p>
+                            <p class="card-text"><b>Borrow time</b> :<br> <%= request[i+2].createdAt %></p>
+                            <a href='/admin/requestlog/accept/<%=request[i+2]._id%>'><button class="my-2 btn btn-success btn-lg btn-block ">Accept &nbsp;<i class="fa fa-check" aria-hidden="true"></i></button></a>
+                            <a href='/admin/requestlog/reject/<%= request[i+2]._id %>'><button class="my-2 btn btn-danger btn-lg btn-block ">Reject &nbsp;<i class="fa fa-window-close" aria-hidden="true"></i></button></a>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    <% } %>
+</div>

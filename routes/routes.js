@@ -1,26 +1,27 @@
-const   express = require('express'),
-        mongoose = require('mongoose'),
-        session = require('express-session'),
-        router  = express.Router(),
-        Admin  = require('../models/admin'),
-        User    = require('../models/user'),
-        BorrowRequest = require('../models/borrow_request'),
-        BorrowLog = require('../models/borrow_log'),
-        Book    = require('../models/book.js');
+const   express         = require('express'),
+        mongoose        = require('mongoose'),
+        session         = require('express-session'),
+        router          = express.Router(),
+        Admin           = require('../models/admin'),
+        User            = require('../models/user'),
+        BorrowRequest   = require('../models/borrow_request'),
+        BorrowLog       = require('../models/borrow_log'),
+        RecordHistory   = require('../models/records_history'),
+        Book            = require('../models/book.js');
 
 router.get("/",(req,res)=>{
     res.render("landing.ejs");
 });
 
-router.use('/login',(req,res)=>{
+router.get('/login',(req,res)=>{
     res.render('login.ejs');
 });
 
-router.use('/adminlogin',(req,res)=>{
+router.get('/adminlogin',(req,res)=>{
     res.render('adminlogin.ejs');
 });
 
-router.use('/register',(req,res)=>{
+router.get('/register',(req,res)=>{
     res.render('register.ejs');
 });
 
@@ -31,13 +32,13 @@ router.use(session({
     saveUninitialized : false
 }));
 
-router.post('/userLoginAction',(req,res)=>{
+router.post('/login',(req,res)=>{
     User.findOne({userName : req.body.username,password : req.body.password},(err,found)=>{
         if(err){
             res.end(err);
         }
         else if(found==null){
-            res.render('adminlogin',{err:1});
+            res.render('login',{err:1});
         }
         else{
             let sess = req.session;
@@ -50,7 +51,7 @@ router.post('/userLoginAction',(req,res)=>{
     });
 });
 
-router.post('/adminLoginAction',(req,res)=>{
+router.post('/adminlogin',(req,res)=>{
     Admin.findOne({userName : req.body.username,password : req.body.password},(err,found)=>{
         console.log(req.body);
         if(err){
@@ -72,7 +73,7 @@ router.post('/adminLoginAction',(req,res)=>{
     });
 });
 
-router.post('/registerAction',(req,res)=>{
+router.post('/register',(req,res)=>{
     const new_user = new User({
         name : {
             fname : req.body.firstName,
@@ -90,7 +91,7 @@ router.post('/registerAction',(req,res)=>{
     });
 });
 
-router.post('/searchAction',(req,res)=>{
+router.post('/index',(req,res)=>{
     console.log(req.body);
     let bookName,Author,Tag,Description;
     let regex = new RegExp(req.body.Search,'i');    
@@ -98,7 +99,6 @@ router.post('/searchAction',(req,res)=>{
     Author=(req.body.Author==null?"=-)(*&":regex);
     Tag=(req.body.Tag==null?"=-)(*&":regex);
     Description=(req.body.Description==null?"=-)(*&":regex);
-    console.log(bookName+"\n"+Author+"\n"+Tag);
 
     Book.find({$or:[{author:Author},{tags:Tag},{name:bookName},{description:Description}]},(req2,books)=>{
         console.log(books);
@@ -127,7 +127,7 @@ router.use("/borrow/:id",(req,res,next)=>{
 
 });
 
-router.use("/index",(req,res)=>{
+router.get("/index",(req,res)=>{
     Book.find({},(err,books)=>{
         if(err)
             console.log("couldn't"+err);
@@ -278,7 +278,173 @@ router.get("/borrow/:id/confirm",(req,res)=>{
     //res.send("Your book has been confirmed");
 });
 
+router.get('/admin/requestlog',(req,res)=>{
+    BorrowRequest.find({},(err,reqs)=>{
+        if(err){
+            console.log(err);
+            res.send(err.message);
+        }
+        else{
+            console.log(reqs);
+            //res.send((reqs));
+            //res.render('request_log',{request: reqs});
+        }
+    })
+    .populate('user_id','name')
+    .populate('book_id')
+    .exec((err,result)=>{
+        console.log(result);
+        res.render('request_log',{request:result});
+    });
+});
 
+router.post('/admin/requestlog',(req,res)=>{
+    let req_name,bookName,copy_id,borrow_time;
+    let regex = new RegExp(req.body.Search,'i'),
+        non_match_regex = new RegExp('zpkasdsdfasdm','i');
+    //console.log(req.body);
+    req_name = (req.body.requestor==null?non_match_regex:regex);
+    bookName = (req.body.BookName==null?non_match_regex:regex);
+    copy_id = (req.body.copy_id==null?non_match_regex:regex);
+    borrow_time = (req.body.borrow_time==null?non_match_regex:regex);
+    BorrowRequest.find({},(err,reqs)=>{
+        if(err){
+            console.log(err);
+            res.send(err.message);
+        }
+    })
+    .populate('user_id','name')
+    .populate('book_id')
+    .exec((err,result)=>{
+        let final=[],len=result.length;
+        for(let i=0;i<len;i++){
+            if( result[i].user_id.name.fname.match(req_name) ||
+                result[i].user_id.name.lname.match(req_name) ||
+                result[i].book_id.name.match(bookName)       ||
+                result[i].copy_id.match(copy_id)             
+            ){
+                final.push(result[i]);
+            }
+        }
+        res.render('request_log',{request:final});
+    });
+});
 
+router.get('/admin/requestlog/accept/:id',(req,res)=>{
+    BorrowRequest.findOne({_id:req.params.id},(err,borrow_req)=>{
+        if(err)console.log(err);
+        else{
+            const new_borrow_log =  new BorrowLog({
+                user_id:borrow_req.user_id,
+                book_id:borrow_req.book_id,
+                copy_id:borrow_req.copy_id,
+                due_date: borrow_req.due_date
+            });
+            new_borrow_log.save((err,saved_doc)=>{
+                if(err)
+                    console.log(err);
+                else{
+                    //User.findOneAndUpdate({_id:user._id},{$push:{borrow_status:borrow_obj._id}},err=>{if(err)console.log(err)});
+                    User.update({_id:borrow_req.user_id, borrow_status:borrow_req._id},{$set:{"borrow_status.$":saved_doc._id}},(err,upd)=>{console.log(upd);});
+                }
+            });
+
+            BorrowRequest.deleteOne({_id:req.params.id},(error,del)=>{
+                if(error)console.log(error);
+                else{
+                    res.send('done!');
+                }
+            });
+        }
+    });
+    //console.log(req.params);
+   // res.send('');
+});
+
+router.get('/admin/requestlog/reject/:id',(req,res)=>{
+
+    BorrowRequest.findOne({_id:req.params.id},(err,breq)=>{
+        Book.updateOne({_id:breq.book_id},{$push:{copies:breq.copy_id}},err=>{if(err)console.log(err);});                        
+        User.updateOne({_id:breq.user_id},{$pull:{borrow_status:breq._id}},(err,user)=>{console.log(user);});
+        BorrowRequest.deleteOne({_id:req.params.id},err=>{if(err)console.log(err);});
+    });
+    res.send('rejected!');
+});
+
+router.get('/admin/returnlog',(req,res)=>{
+    BorrowLog.find({},(err,reqs)=>{
+        if(err){
+            console.log(err);
+            res.send(err.message);
+        }
+        else{
+            console.log(reqs);
+            //res.send((reqs));
+            //res.render('request_log',{request: reqs});
+        }
+    })
+    .populate('user_id','name')
+    .populate('book_id')
+    .exec((err,result)=>{
+        console.log(result);
+        res.render('return_log',{request:result});
+    });
+});
+
+router.post('/admin/returnlog',(req,res)=>{
+    let borrower_name,BookName,copy_id,borrow_time;
+    let regex = new RegExp(req.body.Search,'i'),
+        non_match_regex = new RegExp('zpkasdsdfasdm','i');
+    borrower_name = (req.body.borrower==null?non_match_regex:regex);
+    bookName = (req.body.BookName==null?non_match_regex:regex);
+    copy_id = (req.body.copy_id==null?non_match_regex:regex);
+    borrow_time = (req.body.borrow_time==null?non_match_regex:regex);
+    BorrowLog.find({},(err,reqs)=>{
+        if(err){
+            console.log(err);
+            res.send(err.message);
+        }
+    })
+    .populate('user_id','name')
+    .populate('book_id')
+    .exec((err,result)=>{
+        let final=[],len=result.length;
+        for(let i=0;i<len;i++){
+            if( result[i].user_id.name.fname.match(borrower_name)   ||
+                result[i].user_id.name.lname.match(borrower_name)   ||
+                result[i].book_id.name.match(bookName)              ||
+                result[i].copy_id.match(copy_id)             
+            ){
+                final.push(result[i]);
+            }
+        }
+        res.render('return_log',{request:final});
+    });   
+});
+
+router.get('/admin/returnlog/accept/:id',(req,res)=>{
+    BorrowLog.findOne({_id:req.params.id},(err,borrow_log)=>{
+        if(err)console.log(err); 
+        else{
+            const new_record = new RecordHistory({
+                user_id     : borrow_log.user_id,
+                book_id     : borrow_log.book_id,
+                copy_id     : borrow_log.copy_id,
+                borrow_date : borrow_log.createdAt, 
+                due_date    : borrow_log.due_date
+            });
+            new_record.save(err=>{
+                if(err)
+                    console.log(err);
+            });
+            BorrowLog.findOne({_id:req.params.id},(err,breq)=>{
+                Book.updateOne({_id:breq.book_id},{$push:{copies:breq.copy_id}},err=>{if(err)console.log(err);});                        
+                User.updateOne({_id:breq.user_id},{$pull:{borrow_status:breq._id}},(err,user)=>{console.log(user);});
+                BorrowLog.deleteOne({_id:req.params.id},err=>{if(err)console.log(err);});
+            });
+            res.send('Return Accepted!');
+        }
+    });
+});
 
 module.exports = router;
