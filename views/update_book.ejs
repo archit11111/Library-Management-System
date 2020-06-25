@@ -142,17 +142,17 @@
     <div class="back">
         <a href="/admin"><button style="font-size:24px"><i class="fa fa-arrow-circle-left"></i> Go Back</button></a>
     </div>
-    <h1 class="font-weight-bolder">Delete Books</h1>
+    <h1 class="font-weight-bolder">Update Books</h1>
 </div>
 
-<%if(locals.del&&del==1){ %>
+<%if(locals.upload&&upload==1){ %>
     <div class="px-5 alert alert-success alert-dismissible">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-        <strong>Success!</strong> The Book has been successfully deleted from the database !
+        <strong>Success!</strong> The File has been successfully uploaded  !
       </div>
 <% } %>
 
-<form method = "post" class="form-group" action="/admin/delete">
+<form method = "post" class="form-group" action="/admin/update">
     <div class="wrap" class="form-group">
         <div class="search">
            <input type="text" class="searchTerm" placeholder="What are you looking for?"  name="Search">
@@ -176,11 +176,10 @@
     <% if(locals.books){ %>
     <% books.forEach(function(book){ %>
         <div class="lists jumbotron list-group font-weight-bolder"><br>
-            <form action="/admin/deleteBookAction" onsubmit="confirm('Are you sure you want to delete the book?')" method="POST" id="form"> 
-                <input type="hidden" name="id" value=<%= book._id%> >
-                <div class=" position-absolute float-right text-right">
-                <button type="submit" class="btn btn-danger btn-lg"><i class="fa fa-close"></i></button>
-                </div>
+            <form action="/fileupload" class="s" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="id" value=<%= book._id%> >    
+                <input type="file" style="float:left;" name="upload" multiple/>
+                <input type="submit" id ='submit' class="btn btn-success" value = "upload">
             </form>
             <li class = "list list-group-item ">The book    : <%= book.name %> </li>
             <li class = "list list-group-item">Description : <%= book.description %> </v>
@@ -191,3 +190,6 @@
         </div>
     <% })} %> 
 </ul>
+
+
+

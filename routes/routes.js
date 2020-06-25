@@ -2,6 +2,8 @@ const   express         = require('express'),
         mongoose        = require('mongoose'),
         session         = require('express-session'),
         router          = express.Router(),
+        path            = require('path'),
+        controller      = require('../controllers/controller'),
         Admin           = require('../models/admin'),
         User            = require('../models/user'),
         BorrowRequest   = require('../models/borrow_request'),
@@ -9,106 +11,83 @@ const   express         = require('express'),
         RecordHistory   = require('../models/records_history'),
         Book            = require('../models/book.js');
 
-router.get("/",(req,res)=>{
-    res.render("landing.ejs");
-});
-
-router.get('/login',(req,res)=>{
-    res.render('login.ejs');
-});
-
-router.get('/adminlogin',(req,res)=>{
-    res.render('adminlogin.ejs');
-});
-
-router.get('/register',(req,res)=>{
-    res.render('register.ejs');
-});
-
-
+//session used to store logged in users
 router.use(session({
     secret : 'secretLOL',
     resave : true,
     saveUninitialized : false
 }));
 
-router.post('/login',(req,res)=>{
-    User.findOne({userName : req.body.username,password : req.body.password},(err,found)=>{
-        if(err){
-            res.end(err);
-        }
-        else if(found==null){
-            res.render('login',{err:1});
-        }
-        else{
-            let sess = req.session;
-            sess.name = req.body.username;
-            sess.password = req.body.password;
-            console.log(req.session);
-            //alert('Login Succesful !');
-            res.redirect('/index');            
-        }
-    });
+//main Library page 
+router.get("/",(req,res)=>{
+    res.render("landing.ejs");
 });
 
-router.post('/adminlogin',(req,res)=>{
-    Admin.findOne({userName : req.body.username,password : req.body.password},(err,found)=>{
-        console.log(req.body);
-        if(err){
-            res.end(err);
-        }
-        else if(found==null){
-            res.render('adminlogin',{err:1});
-        }
-        else{
-            let sess = req.session;
-            sess.name = req.body.username;
-            sess.password = req.body.password;
-            sess.admin=1;
-            console.log(req.session);
-            //alert('Login Succesful !');
-            res.redirect('/index');            
-        }
-        
-    });
+router.get('/fileupload',(req,res)=>{
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.write('<form action="/fileupload" method="post" enctype="multipart/form-data">');
+    res.write('<input type="file" name="upload" multiple/><br>');
+    res.write('<input type="submit" value = "upload">');
+    res.write('</form>');
+    return res.end();
 });
 
-router.post('/register',(req,res)=>{
-    const new_user = new User({
-        name : {
-            fname : req.body.firstName,
-            mname : req.body.middleName,
-            lname : req.body.lastName
-        },
-        userName : req.body.username,
-        password : req.body.password
-    });
-    new_user.save((err)=>{
-        if(err)
-            res.end(err);
-        //alert('Registeration successful !');
-        res.redirect('/login');
-    });
+router.post('/fileupload',controller.uploadhandler);
+
+router.post('/logout',(req,res)=>{
+    req.session.destroy();
+    console.log(req.session);
+    res.redirect('/');
 });
 
-router.post('/index',(req,res)=>{
-    console.log(req.body);
-    let bookName,Author,Tag,Description;
-    let regex = new RegExp(req.body.Search,'i');    
-    bookName=(req.body.BookName==null?"=-)(*&":regex);
-    Author=(req.body.Author==null?"=-)(*&":regex);
-    Tag=(req.body.Tag==null?"=-)(*&":regex);
-    Description=(req.body.Description==null?"=-)(*&":regex);
+//********************************************** USER LOGIN **********************************************
 
-    Book.find({$or:[{author:Author},{tags:Tag},{name:bookName},{description:Description}]},(req2,books)=>{
-        console.log(books);
-        if(books==undefined)books=[];
-        res.render('index',{books:books});
-        res.end();
-    });
+//Renders the User Login Page 
+router.get('/login',(req,res)=>{
+    res.render('login.ejs');
 });
 
-router.use("/borrow/:id",(req,res,next)=>{
+//user login authentication
+router.post('/login',controller.user_login_Authentication);
+
+
+//********************************************** ADMIN LOGIN **********************************************
+
+//Renders the Admin Login page
+router.get('/adminlogin',(req,res)=>{
+    res.render('adminlogin.ejs');
+});
+
+//admin login authentication 
+router.post('/adminlogin',controller.admin_login_authentication);
+
+
+//********************************************** USER REGISTERATION **********************************************
+
+//Renders the Registeration page
+router.get('/register',(req,res)=>{
+    res.render('register.ejs');
+});
+
+//Registers a new user into the database
+router.post('/register',controller.user_registeration);
+
+
+//********************************************** MAIN INDEX PAGE **********************************************
+
+//Index page where all the books will be displayed
+router.get("/index",controller.display_books);
+
+//To search for book by bookName, Author, Tags or Description
+router.post('/index',controller.search_books);
+
+
+//********************************************** BORROW PAGE **********************************************
+
+// To verify if the user is logged in
+//      Logged in   - Renders the searched Book's page 
+//      Not logged  - Redirects to User Login page
+router.use("/borrow",(req,res,next)=>{
     const userName = req.session.name;
     const password = req.session.password;
     User.findOne({userName : userName,password : password },(err,found)=>{
@@ -119,7 +98,6 @@ router.use("/borrow/:id",(req,res,next)=>{
             console.log('redirected');
             res.redirect('/login');
         }else{
-            //console.log(req.params+"\nworking");
             next();
         }
     }
@@ -127,97 +105,10 @@ router.use("/borrow/:id",(req,res,next)=>{
 
 });
 
-router.get("/index",(req,res)=>{
-    Book.find({},(err,books)=>{
-        if(err)
-            console.log("couldn't"+err);
-        else{
-            res.statusCode = 404;
-           // res.setHeader('Content-Type', 'text/plain');
-           // res.write("Here : \n");
-            res.render('index',{books : books});
-        }
-    });
-});
-
-router.use("/admin",(req,res,next)=>{
-    console.log(req.session);
-    if(!(req.session!=undefined && req.session.admin==1)){
-        res.send("Error! Make sure you are logged in.");
-    }
-    else{
-        next();
-    }
-});
-
-router.get("/admin",(req,res)=>{
-    res.render('admin');
-})
-
-router.get('/admin/create',(req,res)=>{
-    res.render('create_book.ejs');
-});
-
-router.post('/admin/deleteBookSearchAction',(req,res)=>{
-    let bookName,Author,Tag,Description;
-    let regex = new RegExp(req.body.Search,'i');    
-    bookName=(req.body.BookName==null?"=-)(*&":regex);
-    Author=(req.body.Author==null?"=-)(*&":regex);
-    Tag=(req.body.Tag==null?"=-)(*&":regex);
-    Description=(req.body.Description==null?"=-)(*&":regex);
-    Book.find({$or:[{author:Author},{tags:Tag},{name:bookName},{description:Description}]},(req2,books)=>{
-        if(books==undefined)books=[];
-        res.render('delete_book',{books:books});
-        res.end();
-    });
-});
-
-router.get('/admin/delete',(req,res)=>{
-    res.render('delete_book.ejs');
-});
-
-router.post('/admin/addBookAction',(req,res)=>{
-    //res.send(req.body);
-    console.log(req.body);
-    const tags = req.body.tags.split(','),
-          author = req.body.author.split(','),
-          copies = req.body.copies.split(','),
-          name = req.body.bookName,
-          book_ISBN = req.body.isbn,
-          description = req.body.description,          
-          index = copies.length;
-    const new_book = new Book({
-        name : name,
-        description : description,
-        book_ISBN : book_ISBN,
-        author : author,
-        tags : tags,
-        copies : copies,
-        index : index
-    });
-    new_book.save((err)=>{
-        if(err)
-            res.send(err);
-        else
-            res.render('create_book',{add:1});
-    })
-            
-
-    console.log(tags);
-
-});
-
-router.post('/admin/deleteBookAction',(req,res)=>{
-    console.log(req.body);
-    Book.deleteOne({_id:req.body.id},(req)=>{
-        console.log('deleted');
-        res.render('delete_book.ejs',{del:1});
-    });
-   // res.end();
-});
-
+//If the User is Logged in, the Book's page will be rendered
 router.get("/borrow/:id",(req,res)=>{
     let id = (req.params.id);
+    console.log("start",req.headers);
     Book.findOne({'_id' : mongoose.Types.ObjectId(id) },(err,book)=>{
         if(err){
             console.log("error "+err);
@@ -225,16 +116,22 @@ router.get("/borrow/:id",(req,res)=>{
     })
     .populate('comments.user_id')
     .exec((err,book)=>{
-        if(!err)
-            res.render('borrow.ejs',{book : book, comment : book.comments });
+        if(!err){
+          // console.log(book);
+            let path1 = book.img_path;
+            if(path1!=undefined)
+                path1 = "http://localhost:1234/"+path.parse(path1).base;
+            console.log(path1);
+            res.render('borrow.ejs',{book : book, comment : book.comments, path:path1 });            
+        }
         else 
             console.log(err);
     });
 });
 
-
-
-
+//Once the User confirms to rent a particular book:
+//     -Checks User's borrow status and denies the borrow request if borrow limit is reached
+//     -Checks if more copies of books are available and accepts/denies the request accordingly
 router.get("/borrow/:id/confirm",(req,res)=>{
     let id = (req.params.id);
     Book.findOne({'_id' : mongoose.Types.ObjectId(id) },(err,book)=>{
@@ -278,6 +175,108 @@ router.get("/borrow/:id/confirm",(req,res)=>{
     //res.send("Your book has been confirmed");
 });
 
+//User posts a comment on a particular book(frontend remaining)
+router.post("/borrow/:id",(req,res)=>{
+    let user_id;
+    User.findOne({name:name},(err,user)=>{
+        if(err)
+            console.log(err);
+        else
+            user_id = user._id;
+    });    
+    const comment = req.body.comment,like = req.body.like;
+    const comment_obj = {
+        user_id : user_id,
+        like : like,
+        comment : comment
+    }
+    Book.findOneAndUpdate({_id:req.params.id},{$push:{comments:comment_obj}},err=>{if(err)console.log(err);});
+});
+
+//********************************************** ADMIN PAGE **********************************************
+
+//Middleware to verify if Admin is Logged in
+router.use("/admin",(req,res,next)=>{
+    console.log(req.session);
+    if(!(req.session!=undefined && req.session.admin==1)){
+        res.send("Error! Make sure you are logged in.");
+    }
+    else{
+        next();
+    }
+});
+
+//Renders the admin page if the user is an Admin and logged in
+router.get("/admin",(req,res)=>{
+    res.render('admin');
+})
+
+//Renders page where admin can add new Book records
+router.get('/admin/create',(req,res)=>{
+    res.render('create_book.ejs');
+});
+
+//Adds the admin-inputted Book into the database 
+router.post('/admin/create',(req,res)=>{
+    console.log(req.body);
+    const tags = req.body.tags.split(','),
+          author = req.body.author.split(','),
+          copies = req.body.copies.split(','),
+          name = req.body.bookName,
+          book_ISBN = req.body.isbn,
+          description = req.body.description,          
+          index = copies.length;
+    const new_book = new Book({
+        name : name,
+        description : description,
+        book_ISBN : book_ISBN,
+        author : author,
+        tags : tags,
+        copies : copies,
+        index : index
+    });
+    new_book.save((err)=>{
+        if(err)
+            res.send(err);
+        else
+            res.render('create_book',{add:1});
+    });
+
+});
+
+//Renders page where admin can delete Book records
+router.get('/admin/delete',(req,res)=>{
+    res.render('delete_book.ejs');
+});
+
+//Renders delete page with searched Book records
+router.post('/admin/delete',(req,res)=>{
+    let bookName,Author,Tag,Description;
+    let regex = new RegExp(req.body.Search,'i');    
+    bookName=(req.body.BookName==null?"=-)(*&":regex);
+    Author=(req.body.Author==null?"=-)(*&":regex);
+    Tag=(req.body.Tag==null?"=-)(*&":regex);
+    Description=(req.body.Description==null?"=-)(*&":regex);
+    Book.find({$or:[{author:Author},{tags:Tag},{name:bookName},{description:Description}]},(req2,books)=>{
+        if(books==undefined)books=[];
+        res.render('delete_book',{books:books});
+        res.end();
+    });
+});
+
+
+//Deletes a Book record from Database
+router.post('/admin/deleteBookAction',(req,res)=>{
+    console.log(req.body);
+    Book.deleteOne({_id:req.body.id},(req)=>{
+        console.log('deleted');
+        res.render('delete_book.ejs',{del:1});
+    });
+   // res.end();
+});
+
+
+// Renders all the pending requests
 router.get('/admin/requestlog',(req,res)=>{
     BorrowRequest.find({},(err,reqs)=>{
         if(err){
@@ -298,6 +297,7 @@ router.get('/admin/requestlog',(req,res)=>{
     });
 });
 
+// Searching from all the requests
 router.post('/admin/requestlog',(req,res)=>{
     let req_name,bookName,copy_id,borrow_time;
     let regex = new RegExp(req.body.Search,'i'),
@@ -371,6 +371,7 @@ router.get('/admin/requestlog/reject/:id',(req,res)=>{
     res.send('rejected!');
 });
 
+// Renders all the pending returns 
 router.get('/admin/returnlog',(req,res)=>{
     BorrowLog.find({},(err,reqs)=>{
         if(err){
@@ -390,6 +391,8 @@ router.get('/admin/returnlog',(req,res)=>{
         res.render('return_log',{request:result});
     });
 });
+
+
 
 router.post('/admin/returnlog',(req,res)=>{
     let borrower_name,BookName,copy_id,borrow_time;
@@ -444,6 +447,25 @@ router.get('/admin/returnlog/accept/:id',(req,res)=>{
             });
             res.send('Return Accepted!');
         }
+    });
+});
+
+// Update book (complete functionality remaining, currently works only for uploading files)
+router.get('/admin/update',(req,res)=>{
+    res.render('update_book');
+});
+
+router.post('/admin/update',(req,res)=>{
+    let bookName,Author,Tag,Description;
+    let regex = new RegExp(req.body.Search,'i');    
+    bookName=(req.body.BookName==null?"=-)(*&":regex);
+    Author=(req.body.Author==null?"=-)(*&":regex);
+    Tag=(req.body.Tag==null?"=-)(*&":regex);
+    Description=(req.body.Description==null?"=-)(*&":regex);
+    Book.find({$or:[{author:Author},{tags:Tag},{name:bookName},{description:Description}]},(req,books)=>{
+        if(books==undefined)books=[];
+        res.render('update_book',{books:books});
+        res.end();
     });
 });
 

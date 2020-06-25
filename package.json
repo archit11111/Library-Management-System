@@ -16,7 +16,9 @@
     "express": "^4.17.1",
     "express-handlebars": "^4.0.4",
     "express-session": "^1.17.1",
+    "formidable": "^1.2.2",
     "mongoose": "^5.9.11",
+    "nodemailer": "^6.4.8",
     "nodemon": "^2.0.3"
   }
 }

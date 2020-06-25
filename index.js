@@ -16,11 +16,11 @@ mongoose.connect("mongodb://localhost:27017/Library",{ useUnifiedTopology: true 
     }
     else console.log("Database connected !");
 });
-var seedData    = require("./seed");
+//var seedData    = require("./seed");
 
 //seedData();
+app.use(express.static("uploads"));
 app.use(bodyParser.urlencoded({extended : false}));
-//app.use('/index',(req,res,next)=>{console.log(Date(Date.now()).toString());next();})
 app.set('view engine', 'ejs');
 app.use(routes);
 app.use(controller.borrow_check);

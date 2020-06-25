@@ -7,6 +7,7 @@ const bookSchema = new mongoose.Schema({
         lowercase : true
     },
     description : String,
+    img_path : String,
     book_ISBN : {
         type : String,
         required : true,
